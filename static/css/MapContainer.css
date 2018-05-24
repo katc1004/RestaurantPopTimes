@@ -1,0 +1,10 @@
+.map-style {
+	width: auto;
+	height: 100%;
+}
+
+.map-info {
+	text-decoration: underline;
+	font-weight: bold;
+	display: block;
+}

@@ -1,0 +1,8 @@
+.search-form-container {
+	padding: 20px 20px 20px 20px;
+	height: 100%;
+	width: 30%;
+	overflow: auto;
+	text-align: center;
+	background-color: white;
+}
