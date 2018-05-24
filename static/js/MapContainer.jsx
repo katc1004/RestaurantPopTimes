@@ -11,12 +11,17 @@ export class MapContainer extends React.Component {
 		    showingInfoWindow: false,
 		    activeMarker: {},
 		    selectedPlace: {},
+		    addresslat: this.props.lat,
+		    addresslng: this.props.lng,
+		    data: this.props.data
 		}
-
+		console.log(this.state.lat)
+		console.log(this.state.lng)
+		console.log(this.state.data)
 		this.onMarkerClick = this.onMarkerClick.bind(this);
 		this.onMapClicked = this.onMapClicked.bind(this);
 	}
-
+	
 	onMarkerClick(props, marker, e) {
 	    this.setState({
 	    	selectedPlace: props,

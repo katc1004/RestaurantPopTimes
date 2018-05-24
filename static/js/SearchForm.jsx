@@ -9,20 +9,37 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Button from '@material-ui/core/Button';
 import Radio from '@material-ui/core/Radio';
 import FormLabel from '@material-ui/core/FormLabel';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import MapContainer from "./MapContainer"; 
 
 require('../css/SearchForm.css');
 var $ = require('jquery');
 
-export default class MapContainer extends React.Component {
+export default class SearchForm extends React.Component {
 	constructor(props) {
         super(props);
         this.state = {
 		    address: '',
 		    radius: '',
 		    busy: 0,
+		    loading: false,
+		    invalidSearch: false
   		};
+  		this.key = "AIzaSyCeIk2kOl-d3ENbo7AC855RxAjJug-hOwY";
+  		this.onSubmit = this.onSubmit.bind(this);
   		this.handleChange = this.handleChange.bind(this);
   		this.getResults = this.getResults.bind(this);
+  		this.handleLoading = this.handleLoading.bind(this);
+  		this.handleNotLoading = this.handleNotLoading.bind(this);
+  		this.renderLoadingText = this.renderLoadingText.bind(this);
+  		this.renderInvalidText = this.renderLoadingText.bind(this);
+  		this.renderLoading = this.renderLoading.bind(this);
+  		this.renderMap = this.renderMap.bind(this);
+  	}
+
+  	onSubmit(event) {
+  		this.handleLoading();
+  		this.getResults();
   	}
 
   	handleChange(event) {
@@ -31,14 +48,71 @@ export default class MapContainer extends React.Component {
   		});
   	}
 
+  	handleLoading() {
+  		this.setState({
+  			loading: true
+  		});
+  	}
+
+  	handleNotLoading() {
+  		this.setState({
+  			loading: false
+  		});
+  	}
+
+  	renderLoadingText() {
+	    if(this.state.loading === true) {
+			return (
+				<Typography gutterBottom variant="title">
+				Loading...
+				</Typography>
+			);
+		}
+	}
+
+	renderInvalidText() {
+	    if(this.state.loading === false && this.state.invalidSearch === true) {
+			return (
+				<Typography gutterBottom variant="title">
+				INVALID SEARCH PLEASE TRY AGAIN!
+				</Typography>
+			);
+		}
+	}
+
+	renderLoading() {
+	    if(this.state.loading === true) {
+			return (
+				<CircularProgress size={50} />
+			);
+		}
+	}
+
+	renderMap(data) {
+		return (
+			<MapContainer lat={this.state.lat} lng={this.state.lng} data={data}/>
+		);
+	}
+
   	getResults() {
+  		$.get("https://maps.googleapis.com/maps/api/geocode/json?address=" + this.state.address.replace(" ", "+") + "&key=" + this.key, (data) => {
+  			this.setState({
+  				addresslat: data.results[0].geometry.location.lat,
+  				addresslng: data.results[0].geometry.location.lng
+  			});
+  		});
         let parameters = "address=" + this.state.address + "&radius=" + this.state.radius + "&busy=" + this.state.busy;
         $.get(window.location.href + 'search?' + parameters, (data) => {
         	var received = $.parseJSON(data);
             console.log(received);
             console.log(parameters);
+            this.renderMap(received)
             {/*this.personaliseGreeting(data);*/}
         });
+
+        
+
+
     }
 
 	render() {
@@ -96,24 +170,12 @@ export default class MapContainer extends React.Component {
 					value={3}
 					id="busy"
 					/>As busy as it gets
-
-					{/*}
-					<TextField
-						id="busy"
-						label="How Busy?"
-						select
-						onChange={this.handleChange}
-						value={this.state.busy}
-						margin="normal"
-						style= {{width: 200}}
-						>
-						<MenuItem value={0} primaryText="Not busy" />
-						<MenuItem value={1} primaryText="Not too busy" />
-						<MenuItem value={2} primaryText="Busy" />
-						<MenuItem value={3} primaryText="As busy as it gets" />
-					</TextField>*/}
 					<br></br><br></br>
-					<Button variant="outlined" size="large" onClick={this.getResults}>Submit</Button>
+					<Button variant="outlined" size="large" onClick={this.onSubmit}>Submit</Button>
+					<br></br><br></br>
+					{this.renderLoadingText()}
+					<br></br>
+					{this.renderLoading()}
 				</form>
 			</div>
 		)
