@@ -39,7 +39,10 @@ class PlaceQuery:
 	'''
 	def get_open_now(self, data):
 		for i in (data['results']):
-			self.place_ids_to_open_now[(i['place_id'])] = i['opening_hours']['open_now']
+			try:
+				self.place_ids_to_open_now[(i['place_id'])] = i['opening_hours']['open_now']
+			except:
+				self.place_ids_to_open_now[(i['place_id'])] = False
 
 	'''
 	input: nearby search request data, json
@@ -50,6 +53,27 @@ class PlaceQuery:
 		for i in (data['results']):
 			popular_times_list = self.get_popular_times_helper((i['place_id']))
 			self.place_ids_to_popular_times[(i['place_id'])] = popular_times_list
+
+	def find_location(self, address):
+		# get current location (lat,lng) of address
+		with urllib.request.urlopen("https://maps.googleapis.com/maps/api/geocode/json?address=" + address.replace(" ","+") + "&key=" + API_KEY) as url:
+		    data = json.loads(url.read().decode())
+
+		for i in (data['results']):
+			lat = (i['geometry']['location']['lat'])
+			lng = (i['geometry']['location']['lng'])
+
+		return (lat,lng)
+
+	def find_name(self, placeid, data):
+		for i in (data['results']):
+			if i['place_id'] == placeid:
+				return i['name']
+
+	def find_address(self, placeid, data):
+		for i in (data['results']):
+			if i['place_id'] == placeid:
+				return i['vicinity']
 
 	'''
 	input: 
@@ -64,13 +88,7 @@ class PlaceQuery:
 	Lastly, we go through and find the places that are currently open and satisfy the busy percentage and return a list
 	'''
 	def main(self, address, radius, busy):
-		# get current location (lat,lng) of address
-		with urllib.request.urlopen("https://maps.googleapis.com/maps/api/geocode/json?address=" + address.replace(" ","+") + "&key=" + API_KEY) as url:
-		    data = json.loads(url.read().decode())
-
-		for i in (data['results']):
-			lat = (i['geometry']['location']['lat'])
-			lng = (i['geometry']['location']['lng'])
+		lat, lng = self.find_location(address)
 
 		# Nearby Search request
 		with urllib.request.urlopen("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + str(lat) + "," + str(lng) + "&radius=" + str(radius) + "&type=restaurant" + "&key=" + API_KEY) as url:
@@ -81,7 +99,7 @@ class PlaceQuery:
 		# get all the popular times of the places nearby
 		self.get_popular_times(data)
 		
-		returnlist = []
+		returnlist = defaultdict(lambda: {})
 
 		minbusy, maxbusy = busy
 
@@ -92,15 +110,20 @@ class PlaceQuery:
 					temp = self.place_ids_to_popular_times[i][0]
 					if temp[self.time] >= minbusy and temp[self.time] < maxbusy and temp != None:
 						# add the place id of the place that satisfy busy percentage
-						returnlist.append((i, temp[self.time]))
+						name = self.find_name(i, data)
+						address = self.find_address(i, data)
+						lat, lng = self.find_location(address)
+						returnlist[i]['latitude'] = lat
+						returnlist[i]['longitude'] = lng
+						returnlist[i]['name'] = name
+						returnlist[i]['address'] = address
+						returnlist[i]['busy'] = temp[self.time]
 				except:
 					pass
 
 		return returnlist
-		
-'''
-bam = PlaceQuery()
-output = bam.main("11920 Slater St Overland Park", 1500, (0,20))
-'''
 
+searchrestaurants = PlaceQuery()
+output = searchrestaurants.main('11920 slater st overland park kansas', 1500, (0,50))
+print(json.dumps(output))
 

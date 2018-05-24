@@ -34,7 +34,8 @@ export default class MapContainer extends React.Component {
   	getResults() {
         let parameters = "address=" + this.state.address + "&radius=" + this.state.radius + "&busy=" + this.state.busy;
         $.get(window.location.href + 'search?' + parameters, (data) => {
-            console.log(data);
+        	var received = $.parseJSON(data);
+            console.log(received);
             console.log(parameters);
             {/*this.personaliseGreeting(data);*/}
         });

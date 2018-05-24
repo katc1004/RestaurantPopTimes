@@ -1,7 +1,7 @@
 # server.py
 from flask import Flask, render_template, jsonify, request
 from main import PlaceQuery
-import random
+import random, json
 
 app = Flask(__name__, static_folder="../static/dist", template_folder="../static")
 
@@ -22,9 +22,9 @@ def search():
 			busy = (50, 75)
 		else:
 			busy = (75,100)
-		return "ya it worked"
-		#searchrestaurants = PlaceQuery()
-		#output = searchrestaurants(address, radius, busy)
+		searchrestaurants = PlaceQuery()
+		output = searchrestaurants.main(address, radius, busy)
+		return json.dumps(output)
 	except:
 		return "GET request failed"
 
