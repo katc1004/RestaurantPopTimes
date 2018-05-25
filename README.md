@@ -3,7 +3,7 @@
 Utilizes Google's Popular Times data to search nearby restaurants based on popularity/busyness. I started this project to help me learn ReactJS and APIs. 
 
 ## Running
-* Go to static directory and run `nvm run build`
+* Go to static directory and run `npm run build`
 * Then run `python3 ../server/server.py`
 * Viewable on http://localhost:5000/
 
