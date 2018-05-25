@@ -1,5 +1,5 @@
 import React from "react";
-import { Map, Marker, GoogleApiWrapper, InfoWindow } from 'google-maps-react';
+import { Map, Marker, GoogleApiWrapper, InfoWindow, GoogleMapReact } from 'google-maps-react';
 
 require('../css/MapContainer.css');
 var $ = require('jquery');
@@ -11,17 +11,13 @@ export class MapContainer extends React.Component {
 		    showingInfoWindow: false,
 		    activeMarker: {},
 		    selectedPlace: {},
-		    addresslat: this.props.lat,
-		    addresslng: this.props.lng,
-		    data: this.props.data
 		}
-		console.log(this.state.lat)
-		console.log(this.state.lng)
-		console.log(this.state.data)
 		this.onMarkerClick = this.onMarkerClick.bind(this);
 		this.onMapClicked = this.onMapClicked.bind(this);
+		this.renderMarkers = this.renderMarkers.bind(this);
 	}
-	
+
+	// shows info window when marker is clicked
 	onMarkerClick(props, marker, e) {
 	    this.setState({
 	    	selectedPlace: props,
@@ -30,6 +26,7 @@ export class MapContainer extends React.Component {
 	    });
 	}
 
+	// closes info window when click on map
 	onMapClicked(props) {
 	    if (this.state.showingInfoWindow) {
 	      this.setState({
@@ -38,41 +35,67 @@ export class MapContainer extends React.Component {
 	      });
 	    }
 	}
+
+	// renders all markers based on GET request data including the address query's marker
+	renderMarkers() {
+		if (this.props.data == undefined) {
+			return (
+				<Marker title={'center'} name={'You are here!'}
+				position={{lat: this.props.addresslat, lng: this.props.addresslng }}
+				onClick={this.onMarkerClick}/>	
+	        );
+		}
+		else {
+			var rows = [];
+			rows.push(<Marker title={'center'} name={'You are here!'}
+				position={{lat: this.props.addresslat, lng: this.props.addresslng }}
+				onClick={this.onMarkerClick}/>)
+			Object.entries(this.props.data).map(([index, item]) => {
+			    rows.push(<Marker
+							name={item.name}
+							address={item.address}
+							busypercentage={'Status: ' + item.busy + ' (' + item.busypercentage + '% Busy)'}
+							position={{lat: item.lat, lng: item.lng}} 
+							onClick={this.onMarkerClick} />);
+			})
+			return rows
+		}
+	}
+
 	render() {
-		if (!this.props.loaded) {
+		// rerender the map when not loading
+		if (!this.props.loaded || this.props.reload) {
 			return <div>Loading...</div>
 		}
+		
 		return (
-		<div className="map-style">
-			<Map className="map-style" google={this.props.google} zoom={14} onClick={this.onMapClicked}>
-			  <Marker
-			    title={'The marker`s title will appear as a tooltip.'}
-			    name={'SOMA'}
-			    address={'Address'}
-			    waittime={'Status: Not so busy'}
-			    position={{lat: 37.778519, lng: -122.405640}} 
-			    onClick={this.onMarkerClick}/>
-			  <Marker
-			    name={'Dolores park'}
-			    address={'Address'}
-			    waittime={'Status: Not so busy'}
-			    position={{lat: 37.759703, lng: -122.428093}} 
-			    onClick={this.onMarkerClick}/>
-				<InfoWindow
-		          marker={this.state.activeMarker}
-		          visible={this.state.showingInfoWindow}>
-		            <div>
-		            	<center>
+			<div className="map-style">
+				<Map 
+				className="map-style" 
+				google={this.props.google} 
+				initialCenter={{
+				lat: this.props.addresslat,
+				lng: this.props.addresslng
+				}}
+				zoom={15} 
+				onClick={this.onMapClicked}>
+					{this.renderMarkers()}
+					<InfoWindow
+					marker={this.state.activeMarker}
+					visible={this.state.showingInfoWindow}>
+					<div>
+						<center>
 							<span className="map-info">{this.state.selectedPlace.name}</span>
 							{this.state.selectedPlace.address} <br />
-							{this.state.selectedPlace.waittime}
-		            	</center>
-		            </div>
-		        </InfoWindow>
-			</Map>
-		</div>
-		)
+							{this.state.selectedPlace.busypercentage}
+						</center>
+					</div>
+					</InfoWindow>
+				</Map>
+			</div>
+		);
 	}
+		
 }
 
 export default GoogleApiWrapper({
